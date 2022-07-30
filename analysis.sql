@@ -138,31 +138,30 @@ INNER JOIN covidvax as cv
 	and cd.dates = cv.dates;
 	
 -- Example total population vs vaccinations
-SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.new_vaccinations
+SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.people_fully_vaccinated
 FROM coviddeaths as cd
 INNER JOIN covidvax as cv
 	ON cd.locations = cv.locations
 	and cd.dates = cv.dates
-WHERE cd.continent is not null --and cd.continent = 'North America'
+WHERE cd.continent is not null and cd.locations = 'United States'
 ORDER BY 1,2,3
 
 -- Look at vaccination broken up by location
-SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.new_vaccinations
-, SUM(cv.new_vaccinations) OVER (Partition by cd.locations ORDER BY cd.locations, cd.dates)
+SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.people_fully_vaccinated, ((cv.people_fully_vaccinated/cd.population)*100) as PercentVaccinated
 FROM coviddeaths as cd
 INNER JOIN covidvax as cv
 	ON cd.locations = cv.locations
 	and cd.dates = cv.dates
-WHERE cd.continent is not null and cd.continent = 'North America'
-ORDER BY 1,2,3
+WHERE cd.continent is not null 
+	and cd.locations = 'United States' 
+	and people_fully_vaccinated is not null
+ORDER BY Dates Desc
 
 -- Use CTE
-WITH PopsvsVac (continent, locations, dates, population, new_vaccinations, RollingPeopleVaccinated)
+WITH PopsvsVac (continent, locations, dates, population, people_fully_vaccinated, RollingPeopleVaccinated)
 AS 
 (
-SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.new_vaccinations
-, SUM(cv.new_vaccinations) OVER (Partition by cd.locations ORDER BY cd.locations, cd.dates) as RollingPeopleVaccinated
---, (RollingPeopleVaccinated/population)*100
+SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.people_fully_vaccinated, ((cv.people_fully_vaccinated/cd.population)*100) as PercentVaccinated
 FROM coviddeaths as cd
 INNER JOIN covidvax as cv
 	ON cd.locations = cv.locations
@@ -186,9 +185,7 @@ CREATE TABLE percentvax (
 )
 
 Insert Into percentvax
-SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.new_vaccinations
-, SUM(cv.new_vaccinations) OVER (Partition by cd.locations ORDER BY cd.locations, cd.dates) as RollingPeopleVaccinated
---, (RollingPeopleVaccinated/population)*100
+SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.people_fully_vaccinated, ((cv.people_fully_vaccinated/cd.population)*100) as PercentVaccinated
 FROM coviddeaths as cd
 INNER JOIN covidvax as cv
 	ON cd.locations = cv.locations
@@ -202,14 +199,12 @@ FROM percentvax
 WHERE new_vaccinations is not null and locations = 'United States'
 
 -- Storing view for later visualizations
-Create View PercentPopulationVaccinated as
-SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.new_vaccinations
-, SUM(cv.new_vaccinations) OVER (Partition by cd.locations ORDER BY cd.locations, cd.dates) as RollingPeopleVaccinated
---, (RollingPeopleVaccinated/population)*100
+Create View US_Vax as
+SELECT cd.continent, cd.locations, cd.dates, cd.population, cv.people_fully_vaccinated, ((cv.people_fully_vaccinated/cd.population)*100) as PercentVaccinated
 FROM coviddeaths as cd
 INNER JOIN covidvax as cv
 	ON cd.locations = cv.locations
 	and cd.dates = cv.dates
-WHERE cd.continent is not null
+WHERE cd.continent is not null and cd.locations = 'United States'
 
 SELECT * FROM PercentPopulationVaccinated
