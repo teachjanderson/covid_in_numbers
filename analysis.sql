@@ -208,3 +208,82 @@ INNER JOIN covidvax as cv
 WHERE cd.continent is not null and cd.locations = 'United States'
 
 SELECT * FROM PercentPopulationVaccinated
+
+-- Query to investigate median_age an country
+SELECT median_age, dates from covidvax
+Where locations = 'United States'
+
+SELECT * FROM covidvax
+
+-- Visualization Outputs _________________________________________________________________
+
+-- Global Numbers
+SELECT dates, SUM(new_cases) as total_cases, SUM(cast(new_deaths as int)) as total_deaths, SUM(new_deaths)/SUM(new_cases)*100 as deathpercentage 
+FROM coviddeaths
+WHERE continent is not null and dates is not null
+GROUP BY dates
+order by 1,2
+
+-- VIZ2 Total Death Count
+SELECT locations, SUM(new_deaths) as totaldeathcount
+FROM coviddeaths
+WHERE continent is null
+AND locations not in ('World', 'European Union', 'International', 'Upper middle income', 'High income', 'Low income', 'Lower middle income')
+GROUP BY locations
+ORDER BY totaldeathcount DESC
+
+-- VIZ3 Countries with highest infection rate compared to population
+SELECT locations, population, MAX(total_cases) AS HighestInfectionCount, MAX((total_cases/population))*100 AS PercentPopulationInfected 
+FROM CovidDeaths
+WHERE population is not null 
+AND locations not in (
+	'World','European Union','International', 
+	'Upper middle income', 
+	'High income', 
+	'Low income', 
+	'Lower middle income',
+	'Sint Maarten (Dutch part),'
+	'Jersey,'
+	'Nauru,'
+	'United States Virgin Islands,'
+	'Turkmenistan,'
+	'Tuvalu,'
+	'Western Sahara',
+	'Pitcairn',
+	'Guernsey',
+	'Niue',
+	'Tokelau',
+	'Northern Cyprus',
+	'Puerto Rico',
+	'Guam',
+	'Northern Mariana Islands')
+GROUP BY locations, population
+ORDER BY PercentPopulationInfected DESC
+
+-- VIZ4 Countries with highest infection rate compared to population
+SELECT locations, population, dates, total_cases, MAX(total_cases) AS HighestInfectionCount, MAX((total_cases/population))*100 AS PercentPopulationInfected 
+FROM CovidDeaths
+WHERE total_cases is not null
+AND locations not in (
+	'World','European Union','International', 
+	'Upper middle income', 
+	'High income', 
+	'Low income', 
+	'Lower middle income',
+	'Sint Maarten (Dutch part),'
+	'Jersey,'
+	'Nauru,'
+	'United States Virgin Islands,'
+	'Turkmenistan,'
+	'Tuvalu,'
+	'Western Sahara',
+	'Pitcairn',
+	'Guernsey',
+	'Niue',
+	'Tokelau',
+	'Northern Cyprus',
+	'Puerto Rico',
+	'Guam',
+	'Northern Mariana Islands')
+GROUP BY locations, population, dates, total_cases
+ORDER BY percentpopulationinfected DESC
